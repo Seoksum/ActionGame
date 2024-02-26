@@ -17,7 +17,6 @@ void UInventoryWidget::NativeConstruct()
 	Super::NativeConstruct();
 
 	IPlayerStateInterface* Player = Cast<IPlayerStateInterface>(GetOwningPlayerPawn());
-	// UI와 연결된 Pawn을 가져옴 
 	if (Player)
 	{
 		Inventory = Player->GetMyInventoryComponent();

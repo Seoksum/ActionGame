@@ -13,7 +13,6 @@ AActionGameCharacter_Knight::AActionGameCharacter_Knight()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	CurrentWeaponIndex = EWeapon::Sword;
 	AttackIndex = 0;
 
 	bReplicates = true;

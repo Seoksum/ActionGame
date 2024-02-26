@@ -80,9 +80,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "State", Meta = (AllowPrivateAccess = true))
 	bool IsOnWall;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "State", Meta = (AllowPrivateAccess = true))
-	bool IsClimbingUp;
-
 	UPROPERTY(EditAnywhere, Category = "Attack")
 	float TraceDistance;
 

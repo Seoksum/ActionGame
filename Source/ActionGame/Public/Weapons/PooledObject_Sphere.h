@@ -17,7 +17,7 @@ class ACTIONGAME_API APooledObject_Sphere : public APooledObject
 protected:
 
 	UFUNCTION()
-	void OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+	void OnBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 	virtual void BeginPlay() override;
 
@@ -27,21 +27,16 @@ protected:
 public:
 
 	APooledObject_Sphere();
-	
-	UPROPERTY(EditDefaultsOnly, Category = "Bot")
-	float BaseDamage;
 
-	
-
-	// Bullet Bot 
-public:
-	
 	virtual void Tick(float DeltaTime) override;
 
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<class AEnemy> EnemyClass;
 
-public:
+	UPROPERTY(EditDefaultsOnly, Category = "Object")
+	bool AttackComplete;
+
+protected:
 
 	UPROPERTY(VisibleDefaultsOnly)
 	class AEnemy* Enemy;
@@ -52,15 +47,25 @@ public:
 
 	FVector NextPathPoint;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Object")
+	float BaseDamage;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Bot")
+	UPROPERTY(EditDefaultsOnly, Category = "Object")
 	bool bUseVelocityChange;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Bot")
-	float ForceValue;
+	UPROPERTY(EditDefaultsOnly, Category = "Object")
+	float ForceSize;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Bot")
-	bool AttackComplete;
+	UPROPERTY(EditAnywhere, Category = "Particle Effect")
+	class UParticleSystem* AttackParticle;
+
+	UPROPERTY(EditAnywhere, Category = "Particle Effect")
+	class USoundBase* AttackSound;
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void MulticastPlayEffect(FTransform SpawnTransform,UParticleSystem* Particle, USoundBase* Sound);
+
+
 
 
 

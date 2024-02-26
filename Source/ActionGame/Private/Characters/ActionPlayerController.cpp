@@ -57,11 +57,20 @@ AActionPlayerController::AActionPlayerController()
 	static ConstructorHelpers::FClassFinder<AActionGameCharacter> BP_KnightCharacter(TEXT("Blueprint'/Game/Blueprints/Character/BP_MurielKnight.BP_MurielKnight_C'"));
 	static ConstructorHelpers::FClassFinder<AActionGameCharacter> BP_MazeCharacter(TEXT("Blueprint'/Game/Blueprints/Character/BP_MurielMaze.BP_MurielMaze_C'"));
 
-	PawnToUseA = BP_KnightCharacter.Class;
-	PawnToUseB = BP_MazeCharacter.Class;
+	//PawnToUseA = BP_KnightCharacter.Class;
+	//PawnToUseB = BP_MazeCharacter.Class;
+	
+	PawnToUseA = BP_MazeCharacter.Class;
+	PawnToUseB = BP_KnightCharacter.Class;
 
 	bOnInventoryHUD = false;
 	bReplicates = true;
+
+	if (PlayerCameraManager)
+	{
+		PlayerCameraManager->bShouldSendClientSideCameraUpdate = true;
+		PlayerCameraManager->bUseClientSideCameraUpdates = true;
+	}
 }
 
 void AActionPlayerController::BeginPlay()
@@ -118,13 +127,13 @@ void AActionPlayerController::DeterminePawnClass_Implementation()
 		UActionGameInstance* MyGameInstance = Cast<UActionGameInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
 		if (MyGameInstance)
 		{
-			int32 WeaponType = MyGameInstance->GetCharacterType();
-			if (WeaponType == ECharacterType::Knight)
+			int32 CharacterType = MyGameInstance->GetCharacterType();
+			if (CharacterType == ECharacterType::Knight)
 			{
 				ServerSetPawn(PawnToUseA);
 				CharaterType = ECharacterType::Knight;
 			}
-			else if (WeaponType == ECharacterType::Maze)
+			else if (CharacterType == ECharacterType::Maze)
 			{
 				ServerSetPawn(PawnToUseB);
 				CharaterType = ECharacterType::Maze;

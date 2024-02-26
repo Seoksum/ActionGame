@@ -27,8 +27,6 @@ void AItem_Potion::Use()
 {
 	Super::Use();
 
-	UE_LOG(LogTemp, Log, TEXT("Use(class AActionGameCharacter* PlayerCharacter)  !!!    "));
-
 	IPlayerStateInterface* Player = Cast<IPlayerStateInterface>(GetOwner());
 	if (Player)
 	{
@@ -37,7 +35,7 @@ void AItem_Potion::Use()
 		{
 			if (ItemName.EqualTo(FText::FromString("HpPotion")))
 			{
-				Stat->Heal(HpPotionVal); // HpPotionVal = 15.f;
+				Stat->DrinkHpPotion(HpPotionVal); // HpPotionVal = 15.f;
 			}
 			else if (ItemName.EqualTo(FText::FromString("ManaPotion")))
 			{
@@ -45,6 +43,4 @@ void AItem_Potion::Use()
 			}
 		}
 	}
-
-
 }

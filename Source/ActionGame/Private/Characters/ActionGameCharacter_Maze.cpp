@@ -17,13 +17,16 @@ AActionGameCharacter_Maze::AActionGameCharacter_Maze()
 {
 	ObjectPool = CreateDefaultSubobject<UObjectPool>(TEXT("ObjectPool"));
 
-
 	IsAttacking = false;
+	TraceDistance = 500.f;
+	Radius = 200.f;
 	HealAmount = -10.f;
 
 	bReplicates = true;
 	OnRep_ReplicateMovement();
 	SetReplicateMovement(true);
+	//GetMesh()->MeshComponentUpdateFlag = EMeshComponentUpdateFlag::AlwaysTickPoseAndRefreshBones;
+
 }
 
 void AActionGameCharacter_Maze::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -78,21 +81,34 @@ void AActionGameCharacter_Maze::DefaultAttack(float InDamage, float InTraceDista
 			}
 		}
 	}
-	//NET_LOG(LogNetwork, Log, TEXT("%s"), TEXT("Begin"));
 }
+
+//if (HasAuthority())
+//{
+//	SocketLocation = GetMesh()->GetSocketLocation(FName("RightHandSocket"));
+//	ShotDirection = (GetActorForwardVector().Rotation()).Vector() * 20.f;
+//}
+
+//UE_LOG(LogTemp, Log, TEXT("RightHandSocket Start Loc : (%f,%f,%f)"), NewSocketLocation.X, NewSocketLocation.Y, NewSocketLocation.Z);
 
 void AActionGameCharacter_Maze::SkillQ_Maze()
 {
 	if (HasAuthority())
 	{
-		SocketLocation = GetMesh()->GetSocketLocation(FName("RightHandSocket"));
-		ShotDirection = (GetActorForwardVector().Rotation()).Vector() * 20.f;
-		
+		SphereObject = ObjectPool->SpawnPooledObject();
+		OnRep_SpawnSphereObject();
 	}
+}
 
-	FVector NewSocketLocation = GetMesh()->GetSocketLocation(FName("RightHandSocket"));
-	FVector NewShotDirection = (GetActorForwardVector().Rotation()).Vector() * 20.f;
-	ObjectPool->SpawnPooledObject(NewSocketLocation, NewShotDirection);
+void AActionGameCharacter_Maze::OnRep_SpawnSphereObject()
+{
+	FVector SocketLocation = GetMesh()->GetSocketLocation(FName("RightHandSocket"));
+
+	if (SphereObject)
+	{
+		SphereObject->SetActorLocation(SocketLocation);
+		SphereObject->SetActive(true);
+	}
 }
 
 void AActionGameCharacter_Maze::SkillE_Maze()
@@ -102,8 +118,8 @@ void AActionGameCharacter_Maze::SkillE_Maze()
 	Params.AddIgnoredActor(this);
 
 	const FVector TraceStart = GetActorLocation();
-	const FVector TraceEnd = TraceStart + (GetActorForwardVector() * 500);
-	FCollisionShape SweepShape = FCollisionShape::MakeSphere(200.0f);
+	const FVector TraceEnd = TraceStart + (GetActorForwardVector() * TraceDistance);
+	FCollisionShape SweepShape = FCollisionShape::MakeSphere(Radius);
 
 	bool bResult = GetWorld()->SweepMultiByChannel(TraceHits, TraceStart, TraceEnd, FQuat::Identity, ENEMY_ATTACK, SweepShape, Params);
 	if (bResult)
@@ -114,23 +130,23 @@ void AActionGameCharacter_Maze::SkillE_Maze()
 			AActionGameCharacter* Player = Cast<AActionGameCharacter>(Hit.Actor);
 			UGameplayStatics::ApplyPointDamage(Player, HealAmount, GetActorForwardVector(), Hit, GetController(), this, DamageType);
 
-			if (Particle)
+			if (HealParticle)
 			{
-				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), Particle, Hit.ImpactPoint, FRotator(0.f, 0.f, 0.f), true);
+				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), HealParticle, Hit.ImpactPoint, FRotator(0.f, 0.f, 0.f), true);
 			}
 		}
 	}
 }
 
-void AActionGameCharacter_Maze::SkillUltimate_Maze(float Damage, float TraceDistance, float Radius)
+void AActionGameCharacter_Maze::SkillUltimate_Maze(float InDamage, float InTraceDistance, float InRadius)
 {
 	TArray<FHitResult> TraceHits;
 	FCollisionQueryParams Params;
 	Params.AddIgnoredActor(this);
 
 	const FVector TraceStart = GetActorLocation();
-	const FVector TraceEnd = TraceStart + (GetActorForwardVector() * TraceDistance);
-	FCollisionShape SweepShape = FCollisionShape::MakeSphere(Radius);
+	const FVector TraceEnd = TraceStart + (GetActorForwardVector() * InTraceDistance);
+	FCollisionShape SweepShape = FCollisionShape::MakeSphere(InRadius);
 
 	bool bResult = GetWorld()->SweepMultiByChannel(TraceHits, TraceStart, TraceEnd, FQuat::Identity, ATTACK, SweepShape, Params);
 	if (bResult)
@@ -138,7 +154,7 @@ void AActionGameCharacter_Maze::SkillUltimate_Maze(float Damage, float TraceDist
 		for (FHitResult& Hit : TraceHits)
 		{
 			FDamageEvent DamageEvent;
-			Hit.Actor->TakeDamage(Damage, DamageEvent, GetController(), this);
+			Hit.Actor->TakeDamage(InDamage, DamageEvent, GetController(), this);
 			if (AttackParticle)
 			{
 				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), AttackParticle, Hit.Actor->GetTransform());
@@ -151,9 +167,6 @@ void AActionGameCharacter_Maze::GetLifetimeReplicatedProps(TArray<FLifetimePrope
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	//DOREPLIFETIME(AActionGameCharacter_Maze, HitScanTrace);
-	DOREPLIFETIME(AActionGameCharacter_Maze, SocketLocation);
-	DOREPLIFETIME(AActionGameCharacter_Maze, ShotDirection);
-
+	DOREPLIFETIME(AActionGameCharacter_Maze, SphereObject);
 
 }

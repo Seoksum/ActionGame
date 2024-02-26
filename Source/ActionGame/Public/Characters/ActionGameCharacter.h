@@ -25,7 +25,8 @@ public:
 	FORCEINLINE class UCameraComponent* GetSideViewCameraComponent() const { return SideViewCameraComponent; }
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
-
+	
+	float dummy;
 
 protected:
 
@@ -42,11 +43,11 @@ protected:
 
 	virtual void OnDeath_Implementation() override;
 
-	UPROPERTY(Transient, ReplicatedUsing=OnRep_Death)
-	bool bIsDeath;
+	UPROPERTY(Transient, ReplicatedUsing = OnRep_Death)
+		bool bIsDeath;
 
 	UFUNCTION()
-	void OnRep_Death();
+		void OnRep_Death();
 
 	// Player Respawn 
 public:
@@ -59,7 +60,7 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Respawn")
 	FName TagName;
 
-	UPROPERTY(VisibleAnywhere,Category="Respawn")
+	UPROPERTY(VisibleAnywhere, Category = "Respawn")
 	TArray<AActor*> PlayerStarts;
 
 
@@ -67,12 +68,11 @@ public:
 
 	/** Side view camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	class UCameraComponent* SideViewCameraComponent;
+		class UCameraComponent* SideViewCameraComponent;
 
 	/** Camera boom positioning the camera beside the character */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	class USpringArmComponent* CameraBoom;
-
+		class USpringArmComponent* CameraBoom;
 
 
 	// Attack
@@ -80,47 +80,47 @@ protected:
 
 	void Attack();
 	UFUNCTION(Reliable, Server, WithValidation)
-	void ServerAttack();
+		void ServerAttack();
 	bool ServerAttack_Validate();
 
 	void AttackQ();
 	UFUNCTION(Reliable, Server, WithValidation)
-	void ServerAttackQ();
+		void ServerAttackQ();
 	bool ServerAttackQ_Validate();
 
 	void AttackE();
 	UFUNCTION(Reliable, Server, WithValidation)
-	void ServerAttackE();
+		void ServerAttackE();
 	bool ServerAttackE_Validate();
 
 	void AttackR();
 	UFUNCTION(Reliable, Server, WithValidation)
-	void ServerAttackR();
+		void ServerAttackR();
 	bool ServerAttackR_Validate();
 
 
 
 	//UPROPERTY(ReplicatedUsing = OnRep_IsAttacking)
 	UPROPERTY(VisibleAnywhere, Category = "Attack")
-	bool IsAttacking = false;
+		bool IsAttacking = false;
 
 	UPROPERTY(VisibleAnywhere, Category = "Attack")
-	bool IsAttackingQ = false;
+		bool IsAttackingQ = false;
 
 	UPROPERTY(VisibleAnywhere, Category = "Attack")
-	bool IsAttackingE = false;
+		bool IsAttackingE = false;
 
 	UPROPERTY(VisibleAnywhere, Category = "Attack")
-	bool IsAttackingR = false;
+		bool IsAttackingR = false;
 
 	UPROPERTY(ReplicatedUsing = OnRep_AttackIndex)
-	int32 AttackIndex;
+		int32 AttackIndex;
 
 	UFUNCTION()
-	void OnRep_AttackIndex();
+		void OnRep_AttackIndex();
 
 	UPROPERTY(EditDefaultsOnly, Category = "Animations")
-	int32 MaxAttackIndex;
+		int32 MaxAttackIndex;
 
 	FTimerHandle TimerHandle_SkillCoolQ;
 	FTimerHandle TimerHandle_SkillCoolE;
@@ -132,21 +132,16 @@ protected:
 protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	class UStatComponent* Stat;
+		class UStatComponent* Stat;
 
 	UPROPERTY(VisibleAnywhere)
-	class UPlayerWidgetComponent* StatWidgetComponent;
+		class UPlayerWidgetComponent* StatWidgetComponent;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	float SkillMana;
+		float SkillMana;
 
 	virtual void SetupCharacterWidget(class UPlayerUserWidget* InUserWidget) override;
 
-	UPROPERTY(Transient, Replicated)
-	class AWeapon* CurrentWeapon;
-
-	UPROPERTY(EditAnywhere, Category = "Attack")
-	int32 CurrentWeaponIndex;
 
 	// Level
 public:
@@ -165,56 +160,52 @@ public:
 
 	void LevelUp(float PlayerLevel);
 
-	//UFUNCTION()
-	//void OnRep_LevelUp();
-
-
 
 
 	// AnimInstance & Animation
 public:
 
 	UPROPERTY(VisibleAnywhere)
-	class UBaseCharacterAnimInstance* AnimInstance;
+		class UBaseCharacterAnimInstance* AnimInstance;
 
 	UFUNCTION()
-	void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+		void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
 	UFUNCTION(NetMulticast, Unreliable)
-	void MulticastPlayAnimation(UAnimMontage* Animation);
+		void MulticastPlayAnimation(UAnimMontage* Animation);
 
 	UPROPERTY(EditDefaultsOnly, Category = "Animations")
-	UAnimMontage* AttackAnim;
+		UAnimMontage* AttackAnim;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Animations")
-	UAnimMontage* AttackQ_Anim;
+		UAnimMontage* AttackQ_Anim;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Animations")
-	UAnimMontage* AttackE_Anim;
+		UAnimMontage* AttackE_Anim;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Animations")
-	UAnimMontage* AttackR_Anim;
+		UAnimMontage* AttackR_Anim;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Animations")
-	UAnimMontage* ClimbingUp_Anim;
+		UAnimMontage* ClimbingUp_Anim;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Animations")
-	UAnimMontage* ClimbingComplete_Anim;
+		UAnimMontage* ClimbingComplete_Anim;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Animations")
-	UAnimMontage* Death_Anim;
+		UAnimMontage* Death_Anim;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Animations")
-	UAnimMontage* Respawn_Anim;
 
 
 	// Climbing
 public:
 
+	void ClimbingUp();
+
 	void PressClimbingUp(); // 1번 키를 눌러 캐릭터 벽 타기
 
 	UFUNCTION(Reliable, Server)
-	void ServerPressClimbingUp(UAnimMontage* AnimMontage, bool flag);
+	void ServerPressClimbingUp(UAnimMontage* AnimMontage, bool flag, float InRate);
 
 	void ReleaseClimbing();
 
@@ -227,18 +218,13 @@ public:
 	UPROPERTY(Replicated)
 	bool bIsOnWall;
 
-	UPROPERTY(VisibleAnywhere, Category = "Climbing")
-	bool bIsClimbingComplete = false;
+	UPROPERTY(Replicated)
+	bool bIsClimbingComplete;
 
-	UPROPERTY(VisibleAnywhere, Category = "Climbing")
-	bool CanPressClimbingUp = true;
-
-	//UPROPERTY(VisibleAnywhere, Category = "Climbing")
-	UPROPERTY(ReplicatedUsing = OnRep_ClimbingUp, VisibleAnywhere, Category = "Climbing")
+	UPROPERTY(Replicated)
 	FVector HangingLocation;
 
-	UFUNCTION()
-	void OnRep_ClimbingUp();
+
 
 	UPROPERTY(EditAnywhere, Category = "Climbing")
 	float diff;
@@ -248,11 +234,11 @@ public:
 public:
 
 	UPROPERTY(VisibleAnywhere, Category = "Inventory")
-	class UInventoryComponent* Inventory;
+		class UInventoryComponent* Inventory;
 
 	//UPROPERTY(Replicated)
 	UPROPERTY(VisibleAnywhere, Category = "Inventory")
-	class AItem* CurrentInteractable;
+		class AItem* CurrentInteractable;
 
 	void Interact();
 
@@ -265,7 +251,7 @@ public:
 	void UseItem(class AItem* Item);
 
 	UFUNCTION(Reliable, Server)
-	void ServerUseItem(class AItem* Item);
+		void ServerUseItem(class AItem* Item);
 
 	void SelectInventory();
 
@@ -280,9 +266,8 @@ public:
 	virtual class UInventoryComponent* GetMyInventoryComponent() override;
 
 	virtual bool GetIsDeath() override;
-	virtual int32 GetCurrentWeaponIndex() override;
 	virtual bool GetIsOnWall() override;
-	virtual bool GetIsClibmingUp() override;
+
 
 
 	// InGameWidget 
@@ -304,7 +289,6 @@ protected:
 	void StartSkillCoolTime(int32 Remaining_Skill, char ch);
 	void SetSkillWidget();
 
-	void EnableMouseCursor();
-	void DisableMouseCursor();
+
 
 };

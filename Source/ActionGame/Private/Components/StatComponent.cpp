@@ -75,7 +75,7 @@ void UStatComponent::TakeDamage(AActor* DamagedActor, float Damage, const class 
 	OnHealthChanged.Broadcast(CurrentHp, Damage, DamageType, InstigatedBy, DamageCauser);
 }
 
-void UStatComponent::Heal(float HealAmount)
+void UStatComponent::DrinkHpPotion(float HealAmount)
 {
 	const float PrevHp = CurrentHp;
 	SetHp(FMath::Clamp<float>(PrevHp + HealAmount, 0.f, MaxHp));
@@ -98,26 +98,17 @@ void UStatComponent::SetHp(float Hp)
 			IHealthInterface::Execute_OnDeath(GetOwner());
 		}
 	}
-
 	OnHpChanged.Broadcast(CurrentHp, MaxHp);
-	//UE_LOG(LogTemp, Log, TEXT("Current Hp : %s"), *FString::SanitizeFloat(CurrentHp));
 }
 
-void UStatComponent::OnRep_CurrentHp()
-{
-	OnHpChanged.Broadcast(CurrentHp, MaxHp);
-	if (CurrentHp <= 0.1f)
-	{
-		OnHpZero.Broadcast();
-	}
-}
+//UE_LOG(LogTemp, Log, TEXT("Current Hp : %s"), *FString::SanitizeFloat(CurrentHp));
 
-void UStatComponent::OnRep_MaxHp()
+void UStatComponent::OnRep_UpdateHp()
 {
 	OnHpChanged.Broadcast(CurrentHp, MaxHp);
 }
 
-void UStatComponent::OnRep_ChangeMana()
+void UStatComponent::OnRep_UpdateMana()
 {
 	OnManaChanged.Broadcast(CurrentMana, MaxMana);
 }

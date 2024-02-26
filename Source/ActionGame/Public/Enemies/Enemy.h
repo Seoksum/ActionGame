@@ -92,6 +92,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Enemy")
 	int32 MaxAttackIndex;
 
+	UPROPERTY(EditAnywhere, Category = "Particle Effect")
+	class USoundBase* DeathSound;
+
 
 public:
 

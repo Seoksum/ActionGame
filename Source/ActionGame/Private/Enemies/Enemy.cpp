@@ -14,6 +14,7 @@
 #include "UI/PlayerWidgetComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "Interface/GameModeInterface.h"
+#include "GameFrameworks/ActionGameModeBase.h"
 #include "Items/Item.h"
 #include "GameData/GameEnum.h"
 
@@ -127,7 +128,6 @@ void AEnemy::OnHealthChanged(float Health, float HealthDelta, const UDamageType*
 		{
 			IsDeath = true;
 			OnRep_Death();
-			MulticastPlayAnimation(DeathAnim);
 		}
 		IGameModeInterface* GameMode = GetWorld()->GetAuthGameMode<IGameModeInterface>();
 		if (GameMode)
@@ -140,19 +140,23 @@ void AEnemy::OnHealthChanged(float Health, float HealthDelta, const UDamageType*
 
 void AEnemy::OnRep_Death()
 {
+	MulticastPlayAnimation(DeathAnim);
 	DetachFromControllerPendingDestroy();
 	GetWorldTimerManager().SetTimer(DeathTimerHandle, this, &AEnemy::EnemyDeath, 1.f, false);
+
+	if (DeathSound)
+	{
+		UGameplayStatics::SpawnSoundAtLocation(GetWorld(), DeathSound, GetActorLocation());
+	}
 }
 
 void AEnemy::EnemyDeath()
 {
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	//GetCapsuleComponent()->BodyInstance.SetCollisionProfileName(FName("NoCollision"));
 	GetMesh()->SetVisibility(false);
 	Weapon->SetVisibility(false);
 	HpBar->SetVisibility(false);
-
 	GetWorldTimerManager().ClearTimer(DeathTimerHandle);
 
 	SpawnItem();

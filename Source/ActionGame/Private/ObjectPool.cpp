@@ -8,84 +8,74 @@
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 #include "../ActionGame.h"
-
+#include "Characters/ActionGameCharacter_Maze.h"
 
 // Sets default values for this component's properties
 UObjectPool::UObjectPool()
 {
 	PoolIndex = 0;
 	PoolSize = 5;
-
-	//SpawnTransform = FTransform(FRotator().ZeroRotator, FVector(4068.f, -6337.f, 168.f));
-	//SpawnTransform = FTransform(FRotator().ZeroRotator, GetOwner()->GetActorLocation());
 }
 
 void UObjectPool::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (PooledObjectClass != nullptr)
+	AActionGameCharacter_Maze* Maze = Cast<AActionGameCharacter_Maze>(GetOwner());
+	if (Maze && Maze->HasAuthority())
 	{
-		for (int32 i = 0; i < PoolSize; i++)
+		if (PooledObjectClass != nullptr)
 		{
-			FTransform Transform = FTransform(FRotator().ZeroRotator, GetOwner()->GetActorLocation());
-			APooledObject_Sphere* Bullet = GetWorld()->SpawnActorDeferred<APooledObject_Sphere>(PooledObjectClass, Transform);
-			Bullet->SetOwner(GetOwner());
-			Bullet->SetActive(false);
-			Bullet->SetPoolIndex(PoolIndex++);
-			Bullet->OnPooledObjectDespawn.AddDynamic(this, &UObjectPool::PooledObjectDespawn);
-			BulletPool.Add(Bullet);
-			UGameplayStatics::FinishSpawningActor(Bullet, Transform);
+			for (int32 i = 0; i < PoolSize; i++)
+			{
+				FTransform Transform = FTransform(FRotator().ZeroRotator, Maze->GetActorLocation());
+				APooledObject_Sphere* Sphere = GetWorld()->SpawnActorDeferred<APooledObject_Sphere>(PooledObjectClass, Transform);
+				Sphere->SetOwningPawn(Maze);
+				Sphere->SetActive(false);
+				Sphere->SetPoolIndex(PoolIndex++);
+				Sphere->OnPooledObjectDespawn.AddDynamic(this, &UObjectPool::PooledObjectDespawn);
+				SpherePool.Add(Sphere);
+				UGameplayStatics::FinishSpawningActor(Sphere, Transform);
+			}
 		}
 	}
 }
 
 //UE_LOG(LogTemp, Log, TEXT("SphereObject Start Loc : (%f,%f,%f)"), Start.Z, Start.Y, Start.Z);
 
-APooledObject_Sphere* UObjectPool::SpawnPooledObject(FVector Start, FVector Dir)
+APooledObject_Sphere* UObjectPool::SpawnPooledObject()
 {
-	// BulletPool에서 꺼내기
-	for (APooledObject_Sphere* SphereObject : BulletPool)
+	// SpherePool에서 꺼낼 수 있을 때
+	for (APooledObject_Sphere* SphereObject : SpherePool)
 	{
 		if (SphereObject != nullptr && !SphereObject->IsActive())
 		{
-			if (GetOwner()->HasAuthority())
-			{
-				SphereObject->SetActive(true);
-			}
-			SphereObject->SetActorLocation(Start);
-			SphereObject->AddForceToBullet(Dir);
+			SpawnedPoolIndex.Add(SphereObject->GetPoolIndex());
 			SphereObject->AttackComplete = false;
-			SpawnedPoolIndexes.Add(SphereObject->GetPoolIndex());
 			return SphereObject;
 		}
 	}
 
-	if (SpawnedPoolIndexes.Num() > 0)
+	// SpherePool에서 꺼낼 수 없을 때
+	if (SpawnedPoolIndex.Num() > 0)
 	{
-		int32 PooledObjectIndex = SpawnedPoolIndexes[0];
-		SpawnedPoolIndexes.Remove(PooledObjectIndex);
-		APooledObject_Sphere* SphereObject = BulletPool[PooledObjectIndex];
+		int32 PooledObjectIndex = SpawnedPoolIndex[0];
+		SpawnedPoolIndex.Remove(PooledObjectIndex);
+		APooledObject_Sphere* SphereObject = SpherePool[PooledObjectIndex];
 		if (SphereObject != nullptr)
 		{
-			UE_LOG(LogTemp, Log, TEXT("SphereObject Pool Index Num > 0 "));
 			SphereObject->SetActive(false);
-			SphereObject->SetActorLocation(Start);
-			SphereObject->SetActive(true);
+			SpawnedPoolIndex.Add(SphereObject->GetPoolIndex());
 			SphereObject->AttackComplete = false;
-			SphereObject->AddForceToBullet(Dir);
-			//SphereObject->SetLifeSpan(PooledObjectLifeSpan);
-			SpawnedPoolIndexes.Add(SphereObject->GetPoolIndex());
 			return SphereObject;
 		}
 	}
-
 	return nullptr;
 }
 
 
 void UObjectPool::PooledObjectDespawn(APooledObject* PoolActor)
 {
-	SpawnedPoolIndexes.Remove(PoolActor->GetPoolIndex());
+	SpawnedPoolIndex.Remove(PoolActor->GetPoolIndex());
 }
 

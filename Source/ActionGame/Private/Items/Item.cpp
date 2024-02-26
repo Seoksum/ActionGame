@@ -27,6 +27,7 @@ AItem::AItem()
 	UseActionText = FText::FromString("Use");
 
 	bReplicates = true;
+	bIsMeshVisibility = true;
 }
 
 void AItem::BeginPlay()
@@ -34,19 +35,17 @@ void AItem::BeginPlay()
 	Super::BeginPlay();
 
 	bIsMeshVisibility = true;
-	MeshComp->SetVisibility(bIsMeshVisibility);
+	//MeshComp->SetVisibility(bIsMeshVisibility);
 }
 
-void AItem::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void AItem::OnBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	//AActionGameCharacter* Player = Cast<AActionGameCharacter>(OtherActor);
 	ICharacterItemInterface* Player = Cast<ICharacterItemInterface>(OtherActor);
-
 	if (Player)
 	{
 		Player->CheckForInteractable(this);
 	}
-
 }
 
 
@@ -54,39 +53,32 @@ void AItem::Use()
 {
 }
 
+//MeshComp->SetCollisionProfileName(FName("NoCollision"));
+//MeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
 void AItem::OnPickedUp()
 {
-	NET_LOG(LogNetwork, Log, TEXT("%s"), TEXT("Begin"));
-
-	if (HasAuthority())
+	if (GetOwner()->HasAuthority())
 	{
 		bIsMeshVisibility = false;
 		OnRep_MeshVisibility();
-		MeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		CollisionComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		//ServerOnPickedUp();
 	}
 	else
 	{
 		ServerOnPickedUp();
 	}
-
-	MeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	CollisionComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	MeshComp->SetCollisionProfileName(FName("NoCollision"));
-	//MeshComp->SetVisibility(bIsMeshVisibility);
 }
 
 void AItem::ServerOnPickedUp_Implementation()
 {
+	// Client가 주웠을 때, 모든 화면에서 사라짐
 	OnPickedUp();
-	bIsMeshVisibility = false;
-	MeshComp->SetVisibility(bIsMeshVisibility);
 }
 
 void AItem::OnRep_MeshVisibility()
 {
 	MeshComp->SetVisibility(bIsMeshVisibility);
+	CollisionComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 void AItem::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -94,7 +86,7 @@ void AItem::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimePro
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AItem, bIsMeshVisibility);
-	
+
 
 
 }

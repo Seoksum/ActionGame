@@ -7,28 +7,15 @@
 #include "ActionGameCharacter_Maze.generated.h"
 
 /**
- * 
+ *
  */
 
-//USTRUCT()
-//struct FHitScanTrace
-//{
-//	GENERATED_BODY()
-//
-//public:
-//
-//	UPROPERTY()
-//	FHitResult Hit;
-//
-//	UPROPERTY()
-//	FVector_NetQuantize TraceTo;
-//};
 
 UCLASS()
 class ACTIONGAME_API AActionGameCharacter_Maze : public AActionGameCharacter
 {
 	GENERATED_BODY()
-	
+
 
 public:
 
@@ -36,15 +23,18 @@ public:
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	//UPROPERTY(ReplicatedUsing = OnRep_SocketLocation)
-	UPROPERTY(Replicated)
-	FVector SocketLocation;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
+	UParticleSystem* SpawnedEffect;
 
-	UPROPERTY(Replicated)
-	FVector ShotDirection;
+	UPROPERTY(ReplicatedUsing = OnRep_SpawnSphereObject)
+	class APooledObject_Sphere* SphereObject;
 
-	//UFUNCTION()
-	//void OnRep_SocketLocation();
+	UFUNCTION()
+	void OnRep_SpawnSphereObject();
+
+
+
+
 
 protected:
 
@@ -58,11 +48,13 @@ protected:
 	UFUNCTION()
 	void SkillQ_Maze();
 
+
 	UFUNCTION()
 	void SkillE_Maze();
 
 	UFUNCTION()
-	void SkillUltimate_Maze(float Damage, float TraceDistance, float Radius);
+	void SkillUltimate_Maze(float InDamage, float InTraceDistance, float InRadius);
+
 
 
 protected:
@@ -74,10 +66,16 @@ protected:
 	TSubclassOf<class UDamageType> DamageType;
 
 	UPROPERTY(EditAnywhere, Category = "Skill")
-	class UParticleSystem* Particle;
+	class UParticleSystem* HealParticle;
 
 	UPROPERTY(EditAnywhere, Category = "Skill")
 	class UParticleSystem* AttackParticle;
+
+	UPROPERTY(EditAnywhere, Category = "Skill")
+	float TraceDistance;
+
+	UPROPERTY(EditAnywhere, Category = "Skill")
+	float Radius;
 
 	UPROPERTY(EditAnywhere, Category = "Skill")
 	float HealAmount;

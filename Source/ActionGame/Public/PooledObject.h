@@ -21,9 +21,6 @@ public:
 
 	FOnPooledObjectDespawn OnPooledObjectDespawn;
 
-	UFUNCTION(BlueprintCallable, Category = "Pooled Object")
-		void Deactivate();
-
 	void SetActive(bool IsActive);
 
 	void SetPoolIndex(int32 Index);
@@ -32,6 +29,15 @@ public:
 	int32 GetPoolIndex();
 
 	void AddForceToBullet(FVector Dir);
+
+	void SetOwningPawn(class AActionGameCharacter* NewOwner);
+
+	UPROPERTY(Transient, ReplicatedUsing = OnRep_MyPawn)
+	class AActionGameCharacter* MyPawn;
+
+	UFUNCTION()
+	void OnRep_MyPawn();
+
 
 
 
@@ -60,8 +66,6 @@ protected:
 	UPROPERTY(VisibleDefaultsOnly, Category = "Components")
 	class UStaticMeshComponent* MeshComp;
 
-	UPROPERTY(EditDefaultsOnly,Category="Bullet")
-	float ForceSize;
 
 
 

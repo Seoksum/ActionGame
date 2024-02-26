@@ -24,9 +24,7 @@ class ACTIONGAME_API IPlayerStateInterface
 public:
 
 	virtual bool GetIsDeath() = 0;
-	virtual int32 GetCurrentWeaponIndex() = 0;
 	virtual bool GetIsOnWall() = 0;
-	virtual bool GetIsClibmingUp() = 0;
 
 	virtual class UStatComponent* GetMyStatComponent() = 0;
 	virtual class UInventoryComponent* GetMyInventoryComponent() = 0;

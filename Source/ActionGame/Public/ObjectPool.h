@@ -19,7 +19,7 @@ public:
 	UObjectPool();
 
 	UFUNCTION(BlueprintCallable, Category = "Object Pool")
-	APooledObject_Sphere* SpawnPooledObject(FVector Start,FVector Dir);
+	APooledObject_Sphere* SpawnPooledObject();
 
 
 	UPROPERTY(EditAnywhere, Category = "Object Pool")
@@ -47,10 +47,10 @@ protected:
 	virtual void BeginPlay() override;
 
 	UPROPERTY(VisibleAnywhere, Category = "Object Pool")
-	TArray<APooledObject_Sphere*> BulletPool;
+	TArray<APooledObject_Sphere*> SpherePool;
 
 	UPROPERTY(VisibleAnywhere, Category = "Object Pool")
-	TArray<int32> SpawnedPoolIndexes;
+	TArray<int32> SpawnedPoolIndex;
 
 
 

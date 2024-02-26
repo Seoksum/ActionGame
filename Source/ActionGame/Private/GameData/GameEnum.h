@@ -5,13 +5,6 @@
 #include "CoreMinimal.h"
 #include "GameEnum.generated.h"
 
-UENUM()
-enum EWeapon
-{
-	Sword,
-	Gun,
-	Bow,
-};
 
 UENUM()
 enum ECharacterType

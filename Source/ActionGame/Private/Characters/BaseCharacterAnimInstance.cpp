@@ -29,7 +29,6 @@ void UBaseCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	auto Pawn = TryGetPawnOwner();
 	if (IsValid(Pawn))
 	{
-		auto PlayerCharacter = Cast<AActionGameCharacter>(Pawn);
 		if (Pawn)
 		{
 			Speed = Pawn->GetVelocity().Size();
@@ -41,9 +40,7 @@ void UBaseCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		if (PlayerState)
 		{
 			IsDeath = PlayerState->GetIsDeath();
-			WeaponIdx = PlayerState->GetCurrentWeaponIndex();
 			IsOnWall = PlayerState->GetIsOnWall();
-			IsClimbingUp = PlayerState->GetIsClibmingUp();
 		}
 	}
 }

@@ -23,7 +23,7 @@
 #include "UI/InGameWidget.h"
 #include "GameData/GameEnum.h"
 #include "Interface/GameModeInterface.h"
-
+#include "DrawDebugHelpers.h"
 
 
 AActionGameCharacter::AActionGameCharacter()
@@ -47,10 +47,11 @@ AActionGameCharacter::AActionGameCharacter()
 	CameraBoom->SocketOffset = FVector(0.f, 0.f, 75.f);
 	CameraBoom->SetRelativeRotation(FRotator(0.f, 180.f, 0.f));
 
+
 	// Create a camera and attach to boom
 	SideViewCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("SideViewCamera"));
 	SideViewCameraComponent->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
-	SideViewCameraComponent->bUsePawnControlRotation = false; // We don't want the controller rotating the camera
+
 
 	// Configure character movement
 	GetCharacterMovement()->bOrientRotationToMovement = true; // Face in the direction we are moving..
@@ -84,12 +85,13 @@ AActionGameCharacter::AActionGameCharacter()
 	Level = 1.f;
 	AttackIndex = -1;
 	MaxAttackIndex = 3;
-	diff = 150.f;
+	diff = 100.f;
 
-	CoolDownTime_Q = 3;
+	CoolDownTime_Q = 4;
 	CoolDownTime_E = 5;
 	CoolDownTime_R = 7;
-	CanPressClimbingUp = true;
+
+	bIsClimbingComplete = false;
 
 	TagName = "PlayerStart";
 
@@ -102,7 +104,7 @@ void AActionGameCharacter::SetupPlayerInputComponent(class UInputComponent* Play
 {
 	// set up gameplay key bindings
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
-	//PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
+
 	PlayerInputComponent->BindAxis("MoveRight", this, &AActionGameCharacter::MoveRight);
 	PlayerInputComponent->BindAxis(TEXT("UpDown"), this, &AActionGameCharacter::UpDown);
 
@@ -117,10 +119,6 @@ void AActionGameCharacter::SetupPlayerInputComponent(class UInputComponent* Play
 	PlayerInputComponent->BindAction(TEXT("Interact"), EInputEvent::IE_Pressed, this, &AActionGameCharacter::Interact);
 	PlayerInputComponent->BindAction(TEXT("Inventory"), EInputEvent::IE_Pressed, this, &AActionGameCharacter::SelectInventory);
 
-	PlayerInputComponent->BindAction(TEXT("EnableMouseCursor"), EInputEvent::IE_Pressed, this, &AActionGameCharacter::EnableMouseCursor);
-	PlayerInputComponent->BindAction(TEXT("DisableMouseCursor"), EInputEvent::IE_Pressed, this, &AActionGameCharacter::DisableMouseCursor);
-
-
 }
 
 void AActionGameCharacter::Tick(float DeltaTime)
@@ -130,48 +128,58 @@ void AActionGameCharacter::Tick(float DeltaTime)
 	// 벽 위를 더 이상 오를 수 없어 착지해야할 때
 	if (bIsClimbingComplete)
 	{
-		SetActorLocation(FVector(GetActorLocation() + FVector(-3.0f, 0.0f, 10.0f)));
+		SetActorLocation(FVector(GetActorLocation() + FVector(-2.0f, 0.0f, 8.f)));
 	}
-
 
 	// 등반 중일 때
 	if (bIsOnWall)
 	{
-		//OnRep_ClimbingUp();
-		if (bIsClimbingUp)
-		{
-			FVector HangingLoc = FVector(GetActorLocation() + FVector(0.0f, 0.0f, 450.0f));
-			FRotator HangingRot = GetActorRotation();
-			FLatentActionInfo Info;
-			Info.CallbackTarget = this;
-			UKismetSystemLibrary::MoveComponentTo(
-				GetCapsuleComponent(),
-				HangingLoc,
-				HangingRot,
-				true,
-				true,
-				0.2f,
-				false,
-				EMoveComponentAction::Type::Move,
-				Info);
-			HangingLocation = GetActorLocation();
-		}
-		else
-		{
-			SetActorLocation(HangingLocation);
-		}
+		//if (bIsClimbingUp)
+		//{
+		//	FVector TargetLococation = FVector(GetActorLocation() + FVector(0.0f, 0.0f, 460.0f));
+		//	FRotator TargetRotation = GetActorRotation();
+		//	FLatentActionInfo Info;
+		//	Info.CallbackTarget = this;
+		//	UKismetSystemLibrary::MoveComponentTo(
+		//		GetCapsuleComponent(),
+		//		TargetLococation,
+		//		TargetRotation,
+		//		true,
+		//		true,
+		//		0.2f,
+		//		false,
+		//		EMoveComponentAction::Type::Move,
+		//		Info);
+		//	HangingLocation = GetActorLocation();
+		//}
+		//else
+		//{
+		//	SetActorLocation(HangingLocation);
+		//}
+
+		ClimbingUp();
 	}
 }
 
-void AActionGameCharacter::OnRep_ClimbingUp()
+void AActionGameCharacter::ClimbingUp()
 {
-	//UE_LOG(LogTemp, Log, TEXT("OnRep_ClimbingUp() Func has been called  "));
-
 	if (bIsClimbingUp)
 	{
-		FVector NewLocation = GetActorLocation();
-		NewLocation.Z = HangingLocation.Z;
-		SetActorLocation(NewLocation);
+		FVector TargetLococation = FVector(GetActorLocation() + FVector(0.0f, 0.0f, 450.0f));
+		FRotator TargetRotation = GetActorRotation();
+		FLatentActionInfo Info;
+		Info.CallbackTarget = this;
+		UKismetSystemLibrary::MoveComponentTo(
+			GetCapsuleComponent(),
+			TargetLococation,
+			TargetRotation,
+			true,
+			true,
+			0.2f,
+			false,
+			EMoveComponentAction::Type::Move,
+			Info);
+		HangingLocation = GetActorLocation();
 	}
 	else
 	{
@@ -242,23 +250,21 @@ void AActionGameCharacter::OnDeath_Implementation()
 
 void AActionGameCharacter::OnRep_Death()
 {
-	APlayerController* PlayerController = Cast<APlayerController>(GetController());
-	if (bIsDeath)
+	AActionPlayerController* ActionPlayerController = Cast<AActionPlayerController>(GetController());
+	if (ActionPlayerController)
 	{
-		MulticastPlayAnimation(Death_Anim);
-		DisableInput(PlayerController);
-		GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
-
-		AActionPlayerController* ActionPlayerController = Cast<AActionPlayerController>(GetController());
-		if (ActionPlayerController)
+		if (bIsDeath)
 		{
+			MulticastPlayAnimation(Death_Anim);
+			DisableInput(ActionPlayerController);
+			GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
 			ActionPlayerController->GameHasEnded(this, false);
 		}
-	}
-	else
-	{
-		EnableInput(PlayerController);
-		GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
+		else
+		{
+			EnableInput(ActionPlayerController);
+			GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
+		}
 	}
 }
 
@@ -306,11 +312,6 @@ void AActionGameCharacter::ServerRespawnCharacter_Implementation()
 	}
 }
 
-
-
-
-
-
 void AActionGameCharacter::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
 	IsAttacking = false;
@@ -355,17 +356,12 @@ void AActionGameCharacter::OnRep_AttackIndex()
 
 void AActionGameCharacter::AttackQ()
 {
-	if (IsAttackingQ || Stat->GetCurrentMana() < 0.f)
-		return;
+	//if (IsAttackingQ || Stat->GetCurrentMana() < 0.f)
+	//	return;
 
 	if (!HasAuthority())
 	{
 		ServerAttackQ();
-	}
-
-	if (GetController()->IsLocalController())
-	{
-		StartSkillCoolTime(CoolDownTime_Q, 'Q');
 	}
 
 	MulticastPlayAnimation(AttackQ_Anim);
@@ -376,6 +372,12 @@ void AActionGameCharacter::AttackQ()
 		IsAttackingQ = false;
 		GetWorldTimerManager().ClearTimer(TimerHandle_SkillCoolQ);
 		}), CoolDownTime_Q, true);
+
+
+	if (GetController()->IsLocalController())
+	{
+		StartSkillCoolTime(CoolDownTime_Q, 'Q');
+	}
 }
 
 void AActionGameCharacter::ServerAttackQ_Implementation()
@@ -483,19 +485,16 @@ void AActionGameCharacter::SetupCharacterWidget(UPlayerUserWidget* InUserWidget)
 	UStatWidget* HpBarWidget = Cast<UStatWidget>(InUserWidget);
 	if (HpBarWidget)
 	{
-		HpBarWidget->UpdateHp(Stat->GetCurrentHp(), Stat->GetMaxHp());
 		Stat->OnHpChanged.AddUObject(HpBarWidget, &UStatWidget::UpdateHp);
 		Stat->OnManaChanged.AddUObject(HpBarWidget, &UStatWidget::UpdateMana);
 	}
 }
 
 //NET_LOG(LogNetwork, Log, TEXT("%s"), TEXT("Begin"));
+
 void AActionGameCharacter::IncreaseExp(float Exp)
 {
-	if (HasAuthority())
-	{
-		Stat->SetExp(Exp);
-	}
+	Stat->SetExp(Exp);
 }
 
 void AActionGameCharacter::LevelUp(float PlayerLevel)
@@ -503,7 +502,7 @@ void AActionGameCharacter::LevelUp(float PlayerLevel)
 	Level = PlayerLevel;
 	UGameplayStatics::SpawnEmitterAttached(LevelupEffect, GetMesh());
 	UGameplayStatics::PlaySoundAtLocation(this, LevelupSound, GetActorLocation());
-	
+
 	AActionPlayerController* PlayerController = Cast<AActionPlayerController>(GetController());
 	if (PlayerController && IsLocallyControlled())
 	{
@@ -511,18 +510,11 @@ void AActionGameCharacter::LevelUp(float PlayerLevel)
 	}
 }
 
-//void AActionGameCharacter::OnRep_LevelUp()
-//{
-//	// 파티클,사운드 생성
-//	UGameplayStatics::SpawnEmitterAttached(LevelupEffect, GetMesh());
-//	UGameplayStatics::PlaySoundAtLocation(this, LevelupSound, GetActorLocation());
-//}
+//NET_LOG(LogNetwork, Log, TEXT("%s"), TEXT("Begin"));
 
 void AActionGameCharacter::PressClimbingUp()
 {
-	NET_LOG(LogNetwork, Log, TEXT("%s"), TEXT("Begin"));
-
-	if (!CanPressClimbingUp)
+	if (bIsClimbingUp)
 	{
 		return;
 	}
@@ -530,7 +522,7 @@ void AActionGameCharacter::PressClimbingUp()
 	FVector Start = GetActorLocation();
 	FVector End = Start + GetActorForwardVector() * diff;
 
-	float CapsuleHeight = (GetCapsuleComponent()->GetScaledCapsuleHalfHeight()) * 2.f; // 156.f
+	float CapsuleHeight = (GetCapsuleComponent()->GetScaledCapsuleHalfHeight()) * 2.f;
 
 	Start.Z += CapsuleHeight + diff;
 	End.Z += CapsuleHeight + diff;
@@ -539,25 +531,26 @@ void AActionGameCharacter::PressClimbingUp()
 	FCollisionQueryParams QueryParams;
 	QueryParams.AddIgnoredActor(this);
 	bool bResult = GetWorld()->LineTraceSingleByChannel(OutHit, Start, End, ECC_Visibility, QueryParams);
-
 	float InRate = 0.f;
 
 	// Climbing 
-	if (bResult) // Climbing 
+	if (bResult)
 	{
-		if (!HasAuthority())
-		{
-			ServerPressClimbingUp(ClimbingUp_Anim, true);
-		}
-
 		InRate = 1.3f;
-		CanPressClimbingUp = false;
-		bIsOnWall = true;
-		bIsClimbingUp = true;
+		
+		if (HasAuthority())
+		{
+			bIsOnWall = true;
+			bIsClimbingUp = true;
+			bIsClimbingComplete = false;
 
-		GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Flying);
-		MulticastPlayAnimation(ClimbingUp_Anim);
-
+			GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Flying);
+			MulticastPlayAnimation(ClimbingUp_Anim);
+		}
+		else
+		{
+			ServerPressClimbingUp(ClimbingUp_Anim, true, InRate);
+		}
 	}
 
 	// Complete
@@ -565,19 +558,21 @@ void AActionGameCharacter::PressClimbingUp()
 	{
 		if (bIsOnWall) // Climbing 완료
 		{
-			if (!HasAuthority())
+			InRate = 1.f;
+			
+			if (HasAuthority())
 			{
-				ServerPressClimbingUp(ClimbingComplete_Anim, false);
+				bIsOnWall = false;
+				bIsClimbingUp = false;
+				bIsClimbingComplete = true;
+
+				MulticastPlayAnimation(ClimbingComplete_Anim);
+				GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
 			}
-
-			InRate = 1.1f;
-			MulticastPlayAnimation(ClimbingComplete_Anim);
-			GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
-			bIsOnWall = false;
-			bIsClimbingUp = false;
-			bIsClimbingComplete = true;
-
-
+			else
+			{
+				ServerPressClimbingUp(ClimbingComplete_Anim, false, InRate);
+			}
 		}
 	}
 
@@ -586,33 +581,38 @@ void AActionGameCharacter::PressClimbingUp()
 
 void AActionGameCharacter::ReleaseClimbing()
 {
-	CanPressClimbingUp = true;
 	bIsClimbingUp = false;
 	bIsClimbingComplete = false;
-
 	GetWorld()->GetTimerManager().ClearTimer(ClimbingTimerHandle);
 }
 
-void AActionGameCharacter::ServerPressClimbingUp_Implementation(UAnimMontage* AnimMontage, bool flag)
+void AActionGameCharacter::ServerPressClimbingUp_Implementation(UAnimMontage* AnimMontage, bool flag, float InRate)
 {
-	PressClimbingUp();
+	if (bIsClimbingUp)
+	{
+		return;
+	}
 	bIsOnWall = flag;
 	bIsClimbingUp = flag;
+	bIsClimbingComplete = !flag;
+
+	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Flying);
 	MulticastPlayAnimation(AnimMontage);
+	GetWorld()->GetTimerManager().SetTimer(ClimbingTimerHandle, this, &AActionGameCharacter::ReleaseClimbing, InRate, false);
 }
 
 
 // Inventory
 
-void AActionGameCharacter::Interact()
+// 'Z"키를 눌러 아이템을 수집할 수 있습니다.
+void AActionGameCharacter::Interact() 
 {
-	// 'Z"키를 눌러 아이템을 수집할 수 있습니다.
 	if (CurrentInteractable != nullptr)
 	{
 		CurrentInteractable->OnPickedUp();
-		AddItemToInventory(CurrentInteractable);
+		Inventory->AddItem(CurrentInteractable); // 인벤토리에 아이템을 추가합니다. 
+		CurrentInteractable = nullptr;
 	}
-
 }
 
 void AActionGameCharacter::AddItemToInventory(class AItem* Item)
@@ -624,10 +624,10 @@ void AActionGameCharacter::AddItemToInventory(class AItem* Item)
 	}
 }
 
+// 현재 Overlap된 아이템이 존재한다면 CurrentInteractable에 넣어줍니다. 
+
 void AActionGameCharacter::CheckForInteractable(class AItem* Item)
 {
-	//if (HasAuthority())
-	//{
 	if (Item == NULL)
 	{
 		CurrentInteractable = nullptr;
@@ -635,10 +635,6 @@ void AActionGameCharacter::CheckForInteractable(class AItem* Item)
 	}
 	CurrentInteractable = Item;
 	CurrentInteractable->SetOwner(this);
-	//CurrentInteractable->SetOwningPawn(this);
-	//}
-
-	// 현재 Overlap된 아이템이 존재한다면 CurrentInteractable에 넣어줍니다. 
 }
 
 void AActionGameCharacter::UseItem(class AItem* Item)
@@ -685,9 +681,7 @@ UInventoryComponent* AActionGameCharacter::GetMyInventoryComponent()
 	return NewObject<UInventoryComponent>();
 }
 bool AActionGameCharacter::GetIsDeath() { return bIsDeath; }
-int32 AActionGameCharacter::GetCurrentWeaponIndex() { return CurrentWeaponIndex; }
 bool AActionGameCharacter::GetIsOnWall() { return bIsOnWall; }
-bool AActionGameCharacter::GetIsClibmingUp() { return bIsClimbingUp; }
 
 void AActionGameCharacter::SetSkillWidget()
 {
@@ -698,29 +692,17 @@ void AActionGameCharacter::SetSkillWidget()
 	}
 }
 
-void AActionGameCharacter::EnableMouseCursor()
-{
-	APlayerController* PlayerController = Cast<APlayerController>(GetController());
-	PlayerController->SetShowMouseCursor(true);
-}
-
-void AActionGameCharacter::DisableMouseCursor()
-{
-	APlayerController* PlayerController = Cast<APlayerController>(GetController());
-	PlayerController->SetShowMouseCursor(false);
-}
-
 void AActionGameCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(AActionGameCharacter, CurrentWeapon);
 	DOREPLIFETIME(AActionGameCharacter, bIsDeath);
 	DOREPLIFETIME(AActionGameCharacter, bIsOnWall);
-	//DOREPLIFETIME(AActionGameCharacter, bIsClimbingUp);
+	DOREPLIFETIME(AActionGameCharacter, bIsClimbingComplete);
 
 	DOREPLIFETIME(AActionGameCharacter, AttackIndex);
 	DOREPLIFETIME(AActionGameCharacter, HangingLocation);
+
 
 
 

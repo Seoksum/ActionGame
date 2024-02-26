@@ -19,7 +19,7 @@ void AWeapon::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	OnRep_MyPawn();
+	//OnRep_MyPawn();
 }
 
 void AWeapon::SetOwningPawn(AActionGameCharacter* NewOwner)

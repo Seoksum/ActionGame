@@ -15,7 +15,7 @@
 AActionGameState::AActionGameState()
 {
 
-	MaxNumOfPlayers = 2;
+	MaxNumOfPlayers = 3;
 	RemainingTime = 3;
 	
 }

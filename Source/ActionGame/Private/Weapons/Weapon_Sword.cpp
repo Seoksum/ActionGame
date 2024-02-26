@@ -29,7 +29,7 @@ void AWeapon_Sword::SwordAttack(float InDamage, float InTraceDistance, float InR
 		Params.AddIgnoredActor(this);
 		Params.AddIgnoredActor(MyPawn);
 
-		FVector TraceStart = GetActorLocation();
+		FVector TraceStart = MyPawn->GetActorLocation();
 		FVector TraceEnd = TraceStart + (MyPawn->GetActorForwardVector() * InTraceDistance);
 
 		bool bResult = GetWorld()->SweepSingleByChannel(Hit, TraceStart, TraceEnd, FQuat::Identity, ATTACK, SweepShape, Params);
@@ -55,7 +55,7 @@ void AWeapon_Sword::SwordAttackUltimate(float InRadius, float InTraceDistance, f
 		Params.AddIgnoredActor(this);
 		Params.AddIgnoredActor(MyPawn);
 
-		FVector TraceStart = GetActorLocation();
+		FVector TraceStart = MyPawn->GetActorLocation();
 		FVector TraceEnd = TraceStart + (MyPawn->GetActorForwardVector() * InTraceDistance);
 
 		bool bResult = GetWorld()->SweepMultiByChannel(TraceHits, TraceStart, TraceEnd, FQuat::Identity, ATTACK, SweepShape, Params);

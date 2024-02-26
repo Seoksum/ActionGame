@@ -6,6 +6,7 @@
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Characters/ActionGameCharacter.h"
 #include "Net/UnrealNetwork.h"
 
 
@@ -28,20 +29,21 @@ APooledObject::APooledObject()
 	ProjectileMovement->InitialSpeed = 3000.f;
 	ProjectileMovement->MaxSpeed = 3000.f;
 
-	ForceSize = 1000.f;
+	//ForceSize = 1000.f;
 	bReplicates = true;
-	LifeSpan = 3.f;
+	OnRep_ReplicateMovement();
+	SetReplicateMovement(true);
+	LifeSpan = 7.f;
 	Active = true;
 }
-
 
 void APooledObject::SetActive(bool IsActive)
 {
 	if (HasAuthority())
 	{
 		Active = IsActive;
-		MeshComp->SetVisibility(Active);
-		//GetWorldTimerManager().SetTimer(LifeSpanTimer, this, &APooledObject::Deactivate, LifeSpan, false);
+		OnRep_SetActiveBullet();
+		
 		if (Active)
 		{
 			GetWorldTimerManager().SetTimer(LifeSpanTimer, FTimerDelegate::CreateLambda([this] {
@@ -57,7 +59,6 @@ void APooledObject::SetActive(bool IsActive)
 void APooledObject::OnRep_SetActiveBullet()
 {
 	MeshComp->SetVisibility(Active);
-	//MeshComp->SetSimulatePhysics(Active);
 }
 
 void APooledObject::SetPoolIndex(int32 Index)
@@ -65,17 +66,6 @@ void APooledObject::SetPoolIndex(int32 Index)
 	PoolIndex = Index;
 }
 
-void APooledObject::Deactivate()
-{
-	if (HasAuthority())
-	{
-		Active = false;
-		OnRep_SetActiveBullet();
-	}
-
-	GetWorldTimerManager().ClearTimer(LifeSpanTimer);
-	OnPooledObjectDespawn.Broadcast(this);
-}
 
 bool APooledObject::IsActive()
 {
@@ -89,7 +79,30 @@ int32 APooledObject::GetPoolIndex()
 
 void APooledObject::AddForceToBullet(FVector Dir)
 {
-	MeshComp->AddForce(Dir * ForceSize, NAME_None, true);
+	//MeshComp->AddForce(Dir /* * ForceSize*/, NAME_None, true);
+}
+
+void APooledObject::SetOwningPawn(AActionGameCharacter* NewOwner)
+{
+	if (NewOwner)
+	{
+		SetInstigator(NewOwner);
+		MyPawn = NewOwner;
+		SetOwner(NewOwner);
+	}
+}
+
+void APooledObject::OnRep_MyPawn()
+{
+	MyPawn = Cast<AActionGameCharacter>(GetOwner());
+	if (MyPawn)
+	{
+		SetOwningPawn(MyPawn);
+	}
+	else
+	{
+		SetOwningPawn(nullptr);
+	}
 }
 
 void APooledObject::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -98,5 +111,6 @@ void APooledObject::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
 
 	//DOREPLIFETIME(APooledObject, bIsMeshVisiblity);
 	DOREPLIFETIME(APooledObject, Active);
-	
+	DOREPLIFETIME(APooledObject, MyPawn);
+
 }

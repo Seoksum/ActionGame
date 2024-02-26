@@ -34,7 +34,7 @@ public:
 	void OnAttacked(float DamageAmount);
 	void OnAttacking(float ManaAmount);
 
-	void Heal(float HealAmount);
+	void DrinkHpPotion(float HealAmount);
 	void DrinkManaPotion(float ManaAmount);
 
 	void SetExp(float Exp);
@@ -56,19 +56,18 @@ protected:
 	bool bIsDead;
 
 
-	UPROPERTY(ReplicatedUsing = OnRep_CurrentHp,Transient, BlueprintReadOnly, Category = "Stat")
+	UPROPERTY(ReplicatedUsing = OnRep_UpdateHp,Transient, BlueprintReadOnly, Category = "Stat")
 	float CurrentHp;
 
-	UPROPERTY(ReplicatedUsing = OnRep_MaxHp,Transient, VisibleInstanceOnly, Category = "Stat")
+	UPROPERTY(ReplicatedUsing = OnRep_UpdateHp,Transient, VisibleInstanceOnly, Category = "Stat")
 	float MaxHp;
 
-	UPROPERTY(ReplicatedUsing = OnRep_ChangeMana,Transient, VisibleInstanceOnly, Category = "Stat")
+	UPROPERTY(ReplicatedUsing = OnRep_UpdateMana,Transient, VisibleInstanceOnly, Category = "Stat")
 	float CurrentMana;
 
-	UPROPERTY(ReplicatedUsing = OnRep_ChangeMana, Transient,VisibleInstanceOnly, Category = "Stat")
+	UPROPERTY(ReplicatedUsing = OnRep_UpdateMana, Transient,VisibleInstanceOnly, Category = "Stat")
 	float MaxMana;
 
-	//UPROPERTY(ReplicatedUsing = OnRep_SetLevel, Transient, VisibleInstanceOnly, Category = "Stat")
 	UPROPERTY(ReplicatedUsing = OnRep_SetLevel, Transient, VisibleInstanceOnly, Category = "Stat")
 	float CurrentLevel;
 
@@ -84,13 +83,10 @@ protected:
 protected:
 
 	UFUNCTION()
-	void OnRep_CurrentHp();
+	void OnRep_UpdateHp();
 
 	UFUNCTION()
-	void OnRep_MaxHp();
-
-	UFUNCTION()
-	void OnRep_ChangeMana();
+	void OnRep_UpdateMana();
 
 	UFUNCTION()
 	void OnRep_SetLevel();

@@ -35,7 +35,7 @@ private:
 
 	// 아이템 배열
 	UPROPERTY(VisibleAnywhere, Category = "Items")
-	TArray<class AItem*> Items;
+	TArray<class AItem*> ItemArray;
 		
 
 };

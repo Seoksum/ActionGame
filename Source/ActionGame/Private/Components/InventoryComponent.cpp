@@ -22,11 +22,11 @@ void UInventoryComponent::BeginPlay()
 
 void UInventoryComponent::AddItem(AItem* Item)
 {
-	if (Items.Num() >= Capacity || !Item)
+	if (ItemArray.Num() >= Capacity || !Item)
 		return;
 
 	Item->OwingInventory = this;
-	Items.Add(Item);
+	ItemArray.Add(Item);
 	OnInventoryUpdated.Broadcast(); // UI 업데이트
 }
 
@@ -35,14 +35,13 @@ void UInventoryComponent::RemoveItem(AItem* Item)
 	if (Item)
 	{
 		Item->OwingInventory = nullptr;
-		Items.RemoveSingle(Item);
+		ItemArray.RemoveSingle(Item);
 		OnInventoryUpdated.Broadcast(); // UI 업데이트
 	}
-	return;
 }
 
 TArray<class AItem*> UInventoryComponent::GetItems()
 {
-	return Items;
+	return ItemArray;
 }
 
