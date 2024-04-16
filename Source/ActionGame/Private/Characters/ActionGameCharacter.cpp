@@ -356,14 +356,17 @@ void AActionGameCharacter::OnRep_AttackIndex()
 
 void AActionGameCharacter::AttackQ()
 {
-	//if (IsAttackingQ || Stat->GetCurrentMana() < 0.f)
-	//	return;
+	NET_LOG(LogNetwork, Log, TEXT("%s"), TEXT("Begin"));
+
+	if (IsAttackingQ || Stat->GetCurrentMana() < 0.f)
+		return;
 
 	if (!HasAuthority())
 	{
 		ServerAttackQ();
 	}
 
+	
 	MulticastPlayAnimation(AttackQ_Anim);
 	IsAttackingQ = true;
 	Stat->OnAttacking(SkillMana);
@@ -382,6 +385,8 @@ void AActionGameCharacter::AttackQ()
 
 void AActionGameCharacter::ServerAttackQ_Implementation()
 {
+	NET_LOG(LogNetwork, Log, TEXT("%s"), TEXT("Begin"));
+
 	AttackQ();
 	MulticastPlayAnimation(AttackQ_Anim);
 }

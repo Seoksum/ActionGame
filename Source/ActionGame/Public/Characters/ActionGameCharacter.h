@@ -21,12 +21,19 @@ class AActionGameCharacter : public ACharacter, public IPlayerStateInterface, pu
 public:
 	AActionGameCharacter();
 
+	/** Side view camera */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	class UCameraComponent* SideViewCameraComponent;
+
+	/** Camera boom positioning the camera beside the character */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	class USpringArmComponent* CameraBoom;
+
 	/** Returns SideViewCameraComponent subobject **/
 	FORCEINLINE class UCameraComponent* GetSideViewCameraComponent() const { return SideViewCameraComponent; }
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	
-	float dummy;
 
 protected:
 
@@ -41,13 +48,6 @@ protected:
 	void UpDown(float Val);
 	void MoveRight(float Val);
 
-	virtual void OnDeath_Implementation() override;
-
-	UPROPERTY(Transient, ReplicatedUsing = OnRep_Death)
-		bool bIsDeath;
-
-	UFUNCTION()
-		void OnRep_Death();
 
 	// Player Respawn 
 public:
@@ -57,22 +57,21 @@ public:
 	UFUNCTION(Reliable, Server)
 	void ServerRespawnCharacter();
 
+protected:
+
 	UPROPERTY(EditAnywhere, Category = "Respawn")
 	FName TagName;
 
 	UPROPERTY(VisibleAnywhere, Category = "Respawn")
 	TArray<AActor*> PlayerStarts;
 
+	virtual void OnDeath_Implementation() override;
 
-public:
+	UPROPERTY(ReplicatedUsing = OnRep_Death)
+	bool bIsDeath;
 
-	/** Side view camera */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-		class UCameraComponent* SideViewCameraComponent;
-
-	/** Camera boom positioning the camera beside the character */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-		class USpringArmComponent* CameraBoom;
+	UFUNCTION()
+	void OnRep_Death();
 
 
 	// Attack
@@ -99,28 +98,26 @@ protected:
 	bool ServerAttackR_Validate();
 
 
-
-	//UPROPERTY(ReplicatedUsing = OnRep_IsAttacking)
 	UPROPERTY(VisibleAnywhere, Category = "Attack")
-		bool IsAttacking = false;
+	bool IsAttacking = false;
 
 	UPROPERTY(VisibleAnywhere, Category = "Attack")
-		bool IsAttackingQ = false;
+	bool IsAttackingQ = false;
 
 	UPROPERTY(VisibleAnywhere, Category = "Attack")
-		bool IsAttackingE = false;
+	bool IsAttackingE = false;
 
 	UPROPERTY(VisibleAnywhere, Category = "Attack")
-		bool IsAttackingR = false;
+	bool IsAttackingR = false;
 
 	UPROPERTY(ReplicatedUsing = OnRep_AttackIndex)
-		int32 AttackIndex;
+	int32 AttackIndex;
 
 	UFUNCTION()
-		void OnRep_AttackIndex();
+	void OnRep_AttackIndex();
 
-	UPROPERTY(EditDefaultsOnly, Category = "Animations")
-		int32 MaxAttackIndex;
+	UPROPERTY(EditDefaultsOnly, Category = "Attack")
+	int32 MaxAttackIndex;
 
 	FTimerHandle TimerHandle_SkillCoolQ;
 	FTimerHandle TimerHandle_SkillCoolE;
@@ -166,34 +163,34 @@ public:
 public:
 
 	UPROPERTY(VisibleAnywhere)
-		class UBaseCharacterAnimInstance* AnimInstance;
+	class UBaseCharacterAnimInstance* AnimInstance;
 
 	UFUNCTION()
-		void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+	void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
 	UFUNCTION(NetMulticast, Unreliable)
-		void MulticastPlayAnimation(UAnimMontage* Animation);
+	void MulticastPlayAnimation(UAnimMontage* Animation);
 
 	UPROPERTY(EditDefaultsOnly, Category = "Animations")
-		UAnimMontage* AttackAnim;
+	UAnimMontage* AttackAnim;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Animations")
-		UAnimMontage* AttackQ_Anim;
+	UAnimMontage* AttackQ_Anim;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Animations")
-		UAnimMontage* AttackE_Anim;
+	UAnimMontage* AttackE_Anim;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Animations")
-		UAnimMontage* AttackR_Anim;
+	UAnimMontage* AttackR_Anim;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Animations")
-		UAnimMontage* ClimbingUp_Anim;
+	UAnimMontage* ClimbingUp_Anim;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Animations")
-		UAnimMontage* ClimbingComplete_Anim;
+	UAnimMontage* ClimbingComplete_Anim;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Animations")
-		UAnimMontage* Death_Anim;
+	UAnimMontage* Death_Anim;
 
 
 
@@ -211,7 +208,6 @@ public:
 
 	FTimerHandle ClimbingTimerHandle;
 
-	//UPROPERTY(ReplicatedUsing = OnRep_ClimbingUp, VisibleAnywhere, Category = "Climbing")
 	UPROPERTY(VisibleAnywhere, Category = "Climbing")
 	bool bIsClimbingUp;
 
@@ -223,8 +219,6 @@ public:
 
 	UPROPERTY(Replicated)
 	FVector HangingLocation;
-
-
 
 	UPROPERTY(EditAnywhere, Category = "Climbing")
 	float diff;
