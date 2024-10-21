@@ -9,6 +9,6 @@ public class ActionGame : ModuleRules
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "UMG", "NavigationSystem",
-			"AIModule", "GameplayTasks", "Slate", "SlateCore", });
+			"AIModule", "GameplayTasks", "Slate", "SlateCore","OnlineSubsystemSteam", "OnlineSubsystem" });
 	}
 }

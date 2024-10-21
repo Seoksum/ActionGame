@@ -23,14 +23,14 @@ public:
 
 	/** Side view camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	class UCameraComponent* SideViewCameraComponent;
+	class UCameraComponent* FollowCamera;
 
 	/** Camera boom positioning the camera beside the character */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class USpringArmComponent* CameraBoom;
 
 	/** Returns SideViewCameraComponent subobject **/
-	FORCEINLINE class UCameraComponent* GetSideViewCameraComponent() const { return SideViewCameraComponent; }
+	FORCEINLINE class UCameraComponent* GetSideViewCameraComponent() const { return FollowCamera; }
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	
@@ -48,6 +48,9 @@ protected:
 	void UpDown(float Val);
 	void MoveRight(float Val);
 
+	void TurnAtRate(float Rate);
+	void LookUpAtRate(float Rate);
+
 
 	// Player Respawn 
 public:
@@ -58,6 +61,12 @@ public:
 	void ServerRespawnCharacter();
 
 protected:
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
+	float BaseTurnRate;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
+	float BaseLookUpRate;
 
 	UPROPERTY(EditAnywhere, Category = "Respawn")
 	FName TagName;
@@ -208,7 +217,7 @@ public:
 
 	FTimerHandle ClimbingTimerHandle;
 
-	UPROPERTY(VisibleAnywhere, Category = "Climbing")
+	UPROPERTY(Replicated)
 	bool bIsClimbingUp;
 
 	UPROPERTY(Replicated)
@@ -222,6 +231,7 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Climbing")
 	float diff;
+
 
 
 	// Inventory & Item
@@ -261,6 +271,8 @@ public:
 
 	virtual bool GetIsDeath() override;
 	virtual bool GetIsOnWall() override;
+	virtual bool GetIsClimbing() override;
+	virtual bool GetIsClimbingComplete() override;
 
 
 

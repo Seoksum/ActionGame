@@ -44,13 +44,14 @@ AActionGameCharacter::AActionGameCharacter()
 	CameraBoom->SetUsingAbsoluteRotation(true); // Rotation of the character should not affect rotation of boom
 	CameraBoom->bDoCollisionTest = false;
 	CameraBoom->TargetArmLength = 500.f;
+	CameraBoom->bUsePawnControlRotation = true; // Rotate the arm based on the controller
 	CameraBoom->SocketOffset = FVector(0.f, 0.f, 75.f);
 	CameraBoom->SetRelativeRotation(FRotator(0.f, 180.f, 0.f));
 
-
 	// Create a camera and attach to boom
-	SideViewCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("SideViewCamera"));
-	SideViewCameraComponent->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
+	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
+	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
+	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
 
 	// Configure character movement
@@ -87,6 +88,9 @@ AActionGameCharacter::AActionGameCharacter()
 	MaxAttackIndex = 3;
 	diff = 100.f;
 
+	BaseTurnRate = 45.f;
+	BaseLookUpRate = 45.f;
+
 	CoolDownTime_Q = 4;
 	CoolDownTime_E = 5;
 	CoolDownTime_R = 7;
@@ -108,6 +112,11 @@ void AActionGameCharacter::SetupPlayerInputComponent(class UInputComponent* Play
 	PlayerInputComponent->BindAxis("MoveRight", this, &AActionGameCharacter::MoveRight);
 	PlayerInputComponent->BindAxis(TEXT("UpDown"), this, &AActionGameCharacter::UpDown);
 
+	PlayerInputComponent->BindAxis("Turn", this, &APawn::AddControllerYawInput);
+	PlayerInputComponent->BindAxis("TurnRate", this, &AActionGameCharacter::TurnAtRate);
+	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
+	PlayerInputComponent->BindAxis("LookUpRate", this, &AActionGameCharacter::LookUpAtRate);
+
 
 	PlayerInputComponent->BindAction(TEXT("Attack"), EInputEvent::IE_Pressed, this, &AActionGameCharacter::Attack);
 	PlayerInputComponent->BindAction(TEXT("AttackQ"), EInputEvent::IE_Pressed, this, &AActionGameCharacter::AttackQ);
@@ -128,37 +137,15 @@ void AActionGameCharacter::Tick(float DeltaTime)
 	// 벽 위를 더 이상 오를 수 없어 착지해야할 때
 	if (bIsClimbingComplete)
 	{
-		SetActorLocation(FVector(GetActorLocation() + FVector(-2.0f, 0.0f, 8.f)));
+		SetActorLocation(FVector(GetActorLocation() + FVector(-1.0f, 0.0f, 10.f)));
 	}
 
 	// 등반 중일 때
 	if (bIsOnWall)
 	{
-		//if (bIsClimbingUp)
-		//{
-		//	FVector TargetLococation = FVector(GetActorLocation() + FVector(0.0f, 0.0f, 460.0f));
-		//	FRotator TargetRotation = GetActorRotation();
-		//	FLatentActionInfo Info;
-		//	Info.CallbackTarget = this;
-		//	UKismetSystemLibrary::MoveComponentTo(
-		//		GetCapsuleComponent(),
-		//		TargetLococation,
-		//		TargetRotation,
-		//		true,
-		//		true,
-		//		0.2f,
-		//		false,
-		//		EMoveComponentAction::Type::Move,
-		//		Info);
-		//	HangingLocation = GetActorLocation();
-		//}
-		//else
-		//{
-		//	SetActorLocation(HangingLocation);
-		//}
-
 		ClimbingUp();
 	}
+
 }
 
 void AActionGameCharacter::ClimbingUp()
@@ -222,19 +209,42 @@ void AActionGameCharacter::PostInitializeComponents()
 
 void AActionGameCharacter::UpDown(float Value)
 {
-	if (bIsOnWall || IsAttacking)
+	if (Controller == nullptr || bIsOnWall || IsAttacking)
 		return;
 
-	AddMovementInput(FVector(-1.f, 0.f, 0.f), Value);
+	const FRotator Rotation = Controller->GetControlRotation();
+	const FRotator YawRotation(0, Rotation.Yaw, 0);
+
+	const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+	AddMovementInput(Direction, Value);
+
+	//AddMovementInput(FVector(-1.f, 0.f, 0.f), Value);
 }
 
 void AActionGameCharacter::MoveRight(float Value)
 {
-	if (bIsOnWall || IsAttacking)
+	if (Controller == nullptr || bIsOnWall || IsAttacking)
 		return;
 
-	AddMovementInput(FVector(0.f, -1.f, 0.f), Value);
+	const FRotator Rotation = Controller->GetControlRotation();
+	const FRotator YawRotation(0, Rotation.Yaw, 0);
+
+	const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+	AddMovementInput(Direction, Value);
+
+	//AddMovementInput(FVector(0.f, -1.f, 0.f), Value);
 }
+
+void AActionGameCharacter::TurnAtRate(float Rate)
+{
+	AddControllerYawInput(Rate * BaseTurnRate * GetWorld()->GetDeltaSeconds());
+}
+
+void AActionGameCharacter::LookUpAtRate(float Rate)
+{
+	AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
+}
+
 //NET_LOG(LogNetwork, Log, TEXT("%s"), TEXT("Begin"));
 
 void AActionGameCharacter::OnDeath_Implementation()
@@ -244,8 +254,6 @@ void AActionGameCharacter::OnDeath_Implementation()
 		bIsDeath = true;
 		OnRep_Death();
 	}
-	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
-	SetActorEnableCollision(true);
 }
 
 void AActionGameCharacter::OnRep_Death()
@@ -323,6 +331,8 @@ void AActionGameCharacter::Attack()
 	if (IsAttacking)
 		return;
 
+	IsAttacking = true;
+
 	if (HasAuthority())
 	{
 		MulticastPlayAnimation(AttackAnim);
@@ -333,8 +343,6 @@ void AActionGameCharacter::Attack()
 	{
 		ServerAttack();
 	}
-	IsAttacking = true;
-	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
 }
 
 void AActionGameCharacter::ServerAttack_Implementation()
@@ -366,7 +374,7 @@ void AActionGameCharacter::AttackQ()
 		ServerAttackQ();
 	}
 
-	
+
 	MulticastPlayAnimation(AttackQ_Anim);
 	IsAttackingQ = true;
 	Stat->OnAttacking(SkillMana);
@@ -542,7 +550,7 @@ void AActionGameCharacter::PressClimbingUp()
 	if (bResult)
 	{
 		InRate = 1.3f;
-		
+
 		if (HasAuthority())
 		{
 			bIsOnWall = true;
@@ -550,7 +558,7 @@ void AActionGameCharacter::PressClimbingUp()
 			bIsClimbingComplete = false;
 
 			GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Flying);
-			MulticastPlayAnimation(ClimbingUp_Anim);
+			//MulticastPlayAnimation(ClimbingUp_Anim);
 		}
 		else
 		{
@@ -564,15 +572,22 @@ void AActionGameCharacter::PressClimbingUp()
 		if (bIsOnWall) // Climbing 완료
 		{
 			InRate = 1.f;
-			
+
 			if (HasAuthority())
 			{
 				bIsOnWall = false;
 				bIsClimbingUp = false;
 				bIsClimbingComplete = true;
 
-				MulticastPlayAnimation(ClimbingComplete_Anim);
+				//MulticastPlayAnimation(ClimbingComplete_Anim);
 				GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
+
+				
+				//GetWorldTimerManager().SetTimer(LifeSpanTimer, FTimerDelegate::CreateLambda([this] {
+				//	bIsClimbingComplete = false;
+				//	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
+				//	GetWorldTimerManager().ClearTimer(LifeSpanTimer);
+				//	}), InRate, false);
 			}
 			else
 			{
@@ -600,9 +615,11 @@ void AActionGameCharacter::ServerPressClimbingUp_Implementation(UAnimMontage* An
 	bIsOnWall = flag;
 	bIsClimbingUp = flag;
 	bIsClimbingComplete = !flag;
-
-	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Flying);
-	MulticastPlayAnimation(AnimMontage);
+	if(flag)
+		GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Flying);
+	else
+		GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
+	//MulticastPlayAnimation(AnimMontage);
 	GetWorld()->GetTimerManager().SetTimer(ClimbingTimerHandle, this, &AActionGameCharacter::ReleaseClimbing, InRate, false);
 }
 
@@ -610,7 +627,7 @@ void AActionGameCharacter::ServerPressClimbingUp_Implementation(UAnimMontage* An
 // Inventory
 
 // 'Z"키를 눌러 아이템을 수집할 수 있습니다.
-void AActionGameCharacter::Interact() 
+void AActionGameCharacter::Interact()
 {
 	if (CurrentInteractable != nullptr)
 	{
@@ -687,6 +704,8 @@ UInventoryComponent* AActionGameCharacter::GetMyInventoryComponent()
 }
 bool AActionGameCharacter::GetIsDeath() { return bIsDeath; }
 bool AActionGameCharacter::GetIsOnWall() { return bIsOnWall; }
+bool AActionGameCharacter::GetIsClimbing() { return bIsClimbingUp; }
+bool AActionGameCharacter::GetIsClimbingComplete() { return bIsClimbingComplete; }
 
 void AActionGameCharacter::SetSkillWidget()
 {
@@ -703,6 +722,7 @@ void AActionGameCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 
 	DOREPLIFETIME(AActionGameCharacter, bIsDeath);
 	DOREPLIFETIME(AActionGameCharacter, bIsOnWall);
+	DOREPLIFETIME(AActionGameCharacter, bIsClimbingUp);
 	DOREPLIFETIME(AActionGameCharacter, bIsClimbingComplete);
 
 	DOREPLIFETIME(AActionGameCharacter, AttackIndex);

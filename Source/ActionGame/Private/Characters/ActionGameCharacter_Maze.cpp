@@ -93,15 +93,7 @@ void AActionGameCharacter_Maze::DefaultAttack(float InDamage, float InTraceDista
 
 void AActionGameCharacter_Maze::SkillQ_Maze()
 {
-	if (HasAuthority())
-	{
-		SphereObject = ObjectPool->SpawnPooledObject();
-		OnRep_SpawnSphereObject();
-	}
-}
-
-void AActionGameCharacter_Maze::OnRep_SpawnSphereObject()
-{
+	SphereObject = ObjectPool->SpawnPooledObject();
 	FVector SocketLocation = GetMesh()->GetSocketLocation(FName("RightHandSocket"));
 
 	if (SphereObject)
@@ -161,12 +153,4 @@ void AActionGameCharacter_Maze::SkillUltimate_Maze(float InDamage, float InTrace
 			}
 		}
 	}
-}
-
-void AActionGameCharacter_Maze::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-	DOREPLIFETIME(AActionGameCharacter_Maze, SphereObject);
-
 }

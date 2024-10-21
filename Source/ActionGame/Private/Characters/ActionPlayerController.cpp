@@ -57,11 +57,8 @@ AActionPlayerController::AActionPlayerController()
 	static ConstructorHelpers::FClassFinder<AActionGameCharacter> BP_KnightCharacter(TEXT("Blueprint'/Game/Blueprints/Character/BP_MurielKnight.BP_MurielKnight_C'"));
 	static ConstructorHelpers::FClassFinder<AActionGameCharacter> BP_MazeCharacter(TEXT("Blueprint'/Game/Blueprints/Character/BP_MurielMaze.BP_MurielMaze_C'"));
 
-	//PawnToUseA = BP_KnightCharacter.Class;
-	//PawnToUseB = BP_MazeCharacter.Class;
-	
-	PawnToUseA = BP_MazeCharacter.Class;
 	PawnToUseB = BP_KnightCharacter.Class;
+	PawnToUseA = BP_MazeCharacter.Class;
 
 	bOnInventoryHUD = false;
 	bReplicates = true;

@@ -10,7 +10,7 @@
 
 UBaseCharacterAnimInstance::UBaseCharacterAnimInstance()
 {
-
+	Radius = 200.0f;
 
 }
 
@@ -41,6 +41,10 @@ void UBaseCharacterAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		{
 			IsDeath = PlayerState->GetIsDeath();
 			IsOnWall = PlayerState->GetIsOnWall();
+
+
+			IsClimbingUp = PlayerState->GetIsClimbing();
+			IsClimbingComplete = PlayerState->GetIsClimbingComplete();
 		}
 	}
 }
@@ -70,28 +74,27 @@ void UBaseCharacterAnimInstance::AnimNotify_HealNotify()
 void UBaseCharacterAnimInstance::AnimNotify_AttackHit()
 {
 	TraceDistance = Stat->GetStat().AttackRange;
-	Radius = 200.f;
 	OnAttackHit.Broadcast(Stat->GetStat().Attack, TraceDistance, Radius);
 }
 
 void UBaseCharacterAnimInstance::AnimNotify_AttackHit_Q()
 {
 	TraceDistance = Stat->GetStat().AttackRange * 2.f;
-	Radius = 200.f;
+	Radius *= 1.3f;
 	OnAttackHit.Broadcast(Stat->GetStat().AttackQ, TraceDistance, Radius);
 }
 
 void UBaseCharacterAnimInstance::AnimNotify_AttackHit_E()
 {
 	TraceDistance = Stat->GetStat().AttackRange * 2.5f;
-	Radius = 400.f;
+	Radius *= 1.5f;
 	OnAttackHit.Broadcast(Stat->GetStat().AttackE, TraceDistance, Radius);
 }
 
 void UBaseCharacterAnimInstance::AnimNotify_AttackHit_R()
 {
 	TraceDistance = Stat->GetStat().AttackRange * 3.f;
-	Radius = 500.f;
+	Radius *= 2.f;
 	OnUltimateAttackHit.Broadcast(Stat->GetStat().AttackR, TraceDistance, Radius);
 }
 

@@ -17,7 +17,7 @@ AClimbingWall::AClimbingWall()
 	CollisionComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	CollisionComp->SetCollisionResponseToAllChannels(ECR_Ignore);
 	CollisionComp->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
-	CollisionComp->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepWorldTransform);
+	//CollisionComp->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepWorldTransform);
 
 }
 

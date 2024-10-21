@@ -43,12 +43,11 @@ void APooledObject::SetActive(bool IsActive)
 	{
 		Active = IsActive;
 		OnRep_SetActiveBullet();
-		
+
 		if (Active)
 		{
 			GetWorldTimerManager().SetTimer(LifeSpanTimer, FTimerDelegate::CreateLambda([this] {
-				Active = false;
-				OnRep_SetActiveBullet();
+				SetActive(false);
 				OnPooledObjectDespawn.Broadcast(this);
 				GetWorldTimerManager().ClearTimer(LifeSpanTimer);
 				}), LifeSpan, false);

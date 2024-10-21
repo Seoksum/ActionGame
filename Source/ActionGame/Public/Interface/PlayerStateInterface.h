@@ -26,6 +26,9 @@ public:
 	virtual bool GetIsDeath() = 0;
 	virtual bool GetIsOnWall() = 0;
 
+	virtual bool GetIsClimbing() = 0;
+	virtual bool GetIsClimbingComplete() = 0;
+
 	virtual class UStatComponent* GetMyStatComponent() = 0;
 	virtual class UInventoryComponent* GetMyInventoryComponent() = 0;
 	

@@ -26,13 +26,8 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
 	UParticleSystem* SpawnedEffect;
 
-	UPROPERTY(ReplicatedUsing = OnRep_SpawnSphereObject)
+	UPROPERTY(VisibleAnywhere, Category = "Weapon")
 	class APooledObject_Sphere* SphereObject;
-
-	UFUNCTION()
-	void OnRep_SpawnSphereObject();
-
-
 
 
 
